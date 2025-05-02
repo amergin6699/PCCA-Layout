@@ -52,8 +52,15 @@ class UserConfig {
 
 local load_cfg = false
 my_config <- fe.get_config();
+
 globs <- {"delay" : 500, "signal":"default_sig", "keyhold":-1, "hold":null, "Stimer":fe.layout.time, "script_dir":fe.script_dir, "config_dir":FeConfigDirectory,
-"custom_romlists":["Recent","Favourites","Most Played","All Games"], "customs_romlist_tb":{}, "next_tick_functions":[] }; // super globals temp vars
+"custom_romlists":["Recent","Favourites","Most Played","All Games"], "customs_romlist_tb":{}, "next_tick_functions":[], "sys_available":[] }; // super globals temp vars
+
+foreach (b in fe.displays) {
+    if (b.in_cycle && globs.custom_romlists.find(b.name) == null) {
+        globs.sys_available.push(b.name);
+    }
+}
 
 kiosk <- {"enabled":false, "add_fav":true, "add_tags":true, "menu":true, "exit":true};
 try{kiosk.add_fav = fe.nv["kiosk_add_fav"] }catch(e){}
@@ -1164,7 +1171,11 @@ function load_theme(theme_path, theme_content, prev_def){
                     if(artD.random == "video"){
                         ArtObj[Xtag].file_name = get_random_file(medias_path + curr_emulator + "/Video/" );
                     }else{
-                        ArtObj[Xtag].file_name = get_random_file(medias_path + curr_emulator + "/Images/" + artD.random + "/" );
+                        if(curr_emulator == "Main Menu" && artD.random == "wheel"){
+                            ArtObj[Xtag].file_name = medias_path + curr_emulator + "/Images/Wheel/" + get_random_table(globs.sys_available) + ".png";
+                        }else{
+                            ArtObj[Xtag].file_name = get_random_file(medias_path + curr_emulator + "/Images/" + artD.random + "/" );
+                        }
                     }
                 }
             }
@@ -1196,7 +1207,7 @@ function load_theme(theme_path, theme_content, prev_def){
                     if(fe.game_info(Info.Name) == "All Games" && ArtObj.snap.file_name == ""){ // if all games and no snap, get a random main menu snap
                         local i = 0;
                         while( ArtObj.snap.file_name == "" ){
-                            ArtObj.snap.file_name =  medias_path + "Main Menu/Video/"+get_random_table(fe.displays).name+".mp4";
+                            ArtObj.snap.file_name =  medias_path + "Main Menu/Video/" + get_random_table(globs.sys_available) + ".mp4";
                             if(i>5) break;//break if no radom snap is found after 6 it
                             i++;
                         }
@@ -4033,7 +4044,6 @@ function global_fade(ttime, target, direction){
        fades.alpha = 255 * normalized;
     }
     if(fades.alpha == 0) fades.visible = false; else fades.visible = true
-
    return normalized < 1
 }
 
