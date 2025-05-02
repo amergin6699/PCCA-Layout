@@ -267,6 +267,11 @@ local overlay_surf_anim = PresetAnimation(overlay_surf)
 })
 .duration(500)
 
+system_wheel <- fe.add_image("")
+system_wheel.set_pos(flw*0.89, 1, flw*0.1, flh*0.1)
+system_wheel.preserve_aspect_ratio = true;
+system_wheel.visible = false;
+
 // Globals
 local tr_directory_cache  = get_dir_lists( medias_path + "Frontend/Video/Transitions" ); // cached table of global transitions files
 
@@ -1035,6 +1040,11 @@ function load_theme(theme_path, theme_content, prev_def){
         }
         return false;
     }
+    // show actual system wheel on custom romlists
+    if(globs.customs_romlist_tb.rawin(curr_sys)){
+        system_wheel.file_name = medias_path + "Main Menu/Images/Wheel/" + fe.game_info(Info.System) + ".png";
+        system_wheel.visible = true;
+    }
 
     local zipfolder = ""; // needed when media is inside subfolder on the zip archive
     local DiR = theme_content[0];
@@ -1548,6 +1558,7 @@ function hs_transition( ttype, var, ttime )
 
         case Transition.ToNewSelection: //2
             m_infos.visible = false;
+            system_wheel.visible = false;
             foreach(a,b in artwork_list ){
                 if(curr_theme != "Default" || availables[b] == false ) anims[a].stop(); // used to stop hideart when navigating !
             }
