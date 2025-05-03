@@ -2060,7 +2060,7 @@ local game_text_anim_tab = [{"title":"None","target":"none"},{"title":"Ease","ta
 local rest_tab = [{"title":"Shake", "target":"shake"}, {"title":"Rock", "target":"rock"}, {"title":"Rock Fast", "target":"rock fast"},
 {"title":"Squeeze", "target":"squeeze"}, {"title":"Pulse", "target":"pulse"},{"title":"Pulse Fast", "target":"pulse fast"},{"title":"Hover", "target":"hover"},
 {"title":"Hover Vertical", "target":"hover vertical"},{"title":"Hover Horizontal", "target":"hover horizontal"},{"title":"Spin","target":"spin"},
-{"title":"Spin Slow","target":"spin slow"},{"title":"Spin Fast","target":"spin fast"}];
+{"title":"Spin Slow","target":"spin slow"},{"title":"Spin Fast","target":"spin fast"}, {"title":"3D Spin X", "target":"3d spin x"}, {"title":"3D Spin Y", "target":"3d spin y"}];
 rest_tab.sort(@(a,b) a.title <=> b.title)
 rest_tab.insert(0,{"title":"None", "target":"none"});
 

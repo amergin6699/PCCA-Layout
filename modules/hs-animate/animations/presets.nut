@@ -9,6 +9,7 @@ class PresetAnimation extends Animation {
     supported = ["x", "y", "width", "height", "origin_x", "origin_y", "rotation", "rgb", "red", "green", "blue", "bg_red", "bg_green", "bg_blue", "sel_red", "sel_green", "sel_blue", "sel_alpha", "selbg_red", "selbg_green", "selbg_blue", "selbg_alpha", "alpha", "skew_x", "skew_y", "pinch_x", "pinch_y", "subimg_x", "subimg_y", "charsize", "zorder" ];
     unique_keys = null;
     pr_opt = null;
+    degree=0;
     ParticlesArray = null; // Particles medias clones Array
     function defaults(params){
         base.defaults(params);
@@ -36,6 +37,7 @@ class PresetAnimation extends Animation {
     }
 
     function reset(){
+        degree=0;
         resting = false;
         running = false;
         last_update = 0;
@@ -244,6 +246,10 @@ class PresetAnimation extends Animation {
             case "vertical panning":
             case "random panning":
                 resting_bck(obj, opts.rest);
+            break;            
+            case "3d spin x":
+            case "3d spin y":
+                spin_3d(obj, opts.rest);
             break;
         }
 
@@ -1176,6 +1182,19 @@ class PresetAnimation extends Animation {
         return { x = tx, y = ty };
     }
 
+    function spin_3d(obj, axis){
+        degree+=1.0 * opts.rest_speed
+        if(degree < -360 || degree > 360) degree = 0.0;
+        local pivX = obj.x + obj.width * 0.5;
+        local pivY = obj.y + obj.height * 0.5;
+        obj.shader.set_param("pivot", pivX, pivY);
+        if (axis == "3d spin y"){
+            obj.shader.set_param("vertdatas", degree * (PI / 180.0), 0.0, 0.0, 0.0);
+        }else{
+            obj.shader.set_param("vertdatas", 0.0, degree * (PI / 180.0), 0.0, 0.0);
+        }
+    }
+    
     function resting_bck(art, animate_type){
 
         if( !opts.bck_opts.len() ){
