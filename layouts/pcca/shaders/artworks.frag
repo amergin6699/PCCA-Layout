@@ -4,6 +4,9 @@ uniform sampler2D Tex0;
 uniform float progress;
 uniform float alpha;
 uniform vec4 datas;
+
+varying vec3 v_uvp;
+
 const float PI = 3.14159265358;
 
 void FragOut(vec4 col){
@@ -21,7 +24,7 @@ void pixelate(vec2 uv)
 }
 
 //-- Flag
-void flag(vec2 uv){ 
+void flag(vec2 uv){
     FragOut(texture(Tex0, uv + vec2( 0.0, 0.18 * (1.0 - progress) * cos(10.0 * ((1.0 - progress) + uv.x)))));
 }
 
@@ -65,7 +68,8 @@ void blur(vec2 uv){
 }
 
 void main(){
-    vec2 uv = vec2(gl_TexCoord[0]);
+    //vec2 uv = vec2(gl_TexCoord[0]);
+    vec2 uv = v_uvp.xy / v_uvp.z;
     if(progress == 1.0){
         FragOut( texture(Tex0, uv) );
         return;

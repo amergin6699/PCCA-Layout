@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 //
-// PCCA v2.95
+// PCCA v2.96
 // Use with Attract-Mode Front-End  http://attractmode.org/
 //
 // This program comes with NO WARRANTY.  It is licensed under
@@ -126,6 +126,12 @@ controls.Up    <- ["Joy0 Up", "Up"];
 controls.Down  <- ["Joy0 Down", "Down"];
 controls.HC    <- ["Joy0 Button5", "H"]; // horizontal center
 controls.VC    <- ["Joy0 Button4", "V"]; // vertical center
+
+controls.PL <- ["Joy0 Button12", "P"]; //rotate X Axis +
+controls.PR <- ["Joy0 Button13", "M"]; //rotate Y Axis +
+controls.ML <- ["Joy0 Button10", "O"]; //rotate X Axis -
+controls.MR <- ["Joy0 Button11", "L"]; //rotate Y Axis -
+
 if( my_config["JoyType"]  == "Dinput"){
     controls.C     <- ["Joy0 Button7", "Add"];
     controls.CW    <- ["Joy0 Button6", "Subtract"];
@@ -380,6 +386,9 @@ foreach(k,v in artwork_list ){
 foreach(k,v in artwork_shader){
     v.set_texture_param("Tex0");
     v.set_param("datas",0,0,0,0);
+    v.set_param("depth", 0.0006);
+    v.set_param("vertdatas", 0.0, 0.0, 0.0, 0.0);
+    v.set_param("pivot", 0.0, 0.0);
 }
 
 foreach(k,v in anims_shader){
@@ -390,13 +399,15 @@ foreach(k,v in anims_shader){
 }
 
 // video Shaders and Animations
-video_shader <- fe.add_shader( Shader.Fragment, "shaders/vframe.frag" );
+video_shader <- fe.add_shader( Shader.VertexAndFragment, "shaders/main.vert", "shaders/vframe.frag" );
 ArtObj.snap.shader = video_shader;
 video_shader.set_texture_param("tex_f", ArtObj.video);
 video_shader.set_texture_param("tex_s", ArtObj.snap);
 local scanline = fe.add_image("images/scanline-640.png",-1000,-1000,0.1,0.1);
 scanline.visible = false;
 video_shader.set_texture_param("tex_crt", scanline);
+video_shader.set_param("depth", 0.0006);
+
 anim_video_shader <- ShaderAnimation( video_shader ).name("video_shader");
 anim_video <- PresetAnimation(ArtObj.snap).name("video");
 
@@ -621,7 +632,7 @@ local rating = surf_ginfos.add_image("images/rating/[Rating]");
 rating.set_pos(flw*0.007, flh*0.119, flw*0.0240, flh*0.053);
 
 /* Main SettingsOverlay */
-surf_menu <- fe.add_surface(flw * 0.20, flh);
+surf_menu <- fe.add_surface(flw * 0.22, flh);
 surf_menu.zorder = 2;
 local surf_menu_bck = surf_menu.add_image("images/Backgrounds/faded.png", 0, 0, flw, flh );
 surf_menu_bck.alpha = 80;
@@ -3952,7 +3963,6 @@ signals["default_sig"] <- function (str) {
 
             local select_tags = fe.overlay.list_dialog(taglist, overlay_title.msg, 0, -1);
             if( select_tags < taglist.len()-1 && select_tags >-1){
-                print("la selection est " + select_tags + "sur " + taglist.len() + "donc:"+taglist[select_tags]+"\n");
                 update_tags(globs.config_dir + "romlists/" + curr_sys, tag_idx[select_tags].name ,tag_idx[select_tags].add) // update system tag file
                 fe.set_display(fe.list.display_index);
             }
@@ -4168,6 +4178,8 @@ function edit_artworks(elem){ // edit for artworks pos/size/rotate
     local w = child.attr["w"];
     local x = child.attr["x"];
     local y = child.attr["y"];
+    local rx = child.attr["rx"];
+    local ry = child.attr["ry"];
 
     local speed = globs.keyhold * 0.10;
     local step = ( !speed ? 0.1 : (speed >=1 ? clamp( speed * 0.1  , 0.1 , 8.00) : 0.0) );
@@ -4209,10 +4221,29 @@ function edit_artworks(elem){ // edit for artworks pos/size/rotate
         }
     }
 
+    if( g_input("PL") ) {
+        if(rx > 360) rx = 0.0;
+        set = child.addAttr("rx", rx+=step * 0.1);
+    }
+    if( g_input("ML") ) {
+        if(rx < -360) rx = 0.0;
+        set = child.addAttr("rx", rx-=step * 0.1);
+    }
+
+    if( g_input("PR") ) {
+        if(ry > 360) ry = 0.0;
+        set = child.addAttr("ry", ry+=step * 0.1);
+    }
+    if( g_input("MR") ) {
+        if(ry < -360) ry = 0.0;
+        set = child.addAttr("ry", ry-=step * 0.1);
+    }
+
     if( g_input("HC") ) set = child.addAttr("x", x = xml_root.getChild("hd").attr.lw.tofloat() * 0.5);
     if( g_input("VC") ) set = child.addAttr("y", y = xml_root.getChild("hd").attr.lh.tofloat() * 0.5);
 
-    surf_menu_info.msg = "x:" + format("%.1f", x) + " y:" + format("%.1f", y) + " w:" + format("%.1f", w) + " h:" + format("%.1f", h) + " r:" + format("%.1f", r);
+    surf_menu_info.msg = "x:" + format("%.1f", x) + " y:" + format("%.1f", y) + " w:" + format("%.1f", w) + " h:" + format("%.1f", h) + " r:" + format("%.1f", r) +
+                         "rx:" + format("%.1f", rx) + " ry:" + format("%.1f", ry);
     if(set != false){
         if(elem != "video") artworks_transform(elem) else video_transform();
     }
@@ -4287,8 +4318,13 @@ function artworks_transform(Xtag, rotate=true, art=""){
 
     ArtObj[Xtag].set_pos( (artD.x * mul) + offset_x, (artD.y * mul_h) + offset_y, artD.w * mul , artD.h * mul_h);
 
+    update_shader(artD, ArtObj[Xtag], ArtObj[Xtag].shader)
+
     if(hd) ArtObj[Xtag].zorder = artD.zorder; // zorder only on HD theme
 }
+
+
+
 
 function set_custom_value(Ini_settings) {
 

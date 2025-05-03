@@ -580,7 +580,18 @@ function video_transform(rotate=true){
     video_shader.set_param("frame_coord", f_w, f_h , viewport_width, viewport_height);
 
     ArtObj.snap.set_pos( (artD.x  * mul) + offset_x, (artD.y * mul_h) + offset_y, viewport_width * mul, viewport_height * mul_h);
+
+	update_shader(artD, ArtObj.snap, video_shader)
 }
+
+function update_shader(attr, img, shader)
+{
+    local pivX = img.x + img.width * 0.5;
+    local pivY = img.y + img.height * 0.5;
+    shader.set_param("pivot", pivX, pivY);
+    shader.set_param("vertdatas", attr.rx * (PI / 180.0), attr.ry * (PI / 180.0), 0.0, 0.0);
+}
+
 
 function create_theme_struct(sys){
     local arr = ["/Images/", "/Images/Letters/", "/Images/Other/", "/Images/Particle/", "/Images/Special/", "/Images/Wheel/", "/Images/Backgrounds/",

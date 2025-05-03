@@ -1,5 +1,4 @@
 #version 130
-
 uniform float progress;
 uniform float alpha;
 uniform vec2 datas;
@@ -14,6 +13,7 @@ uniform vec3 border1;
 uniform vec3 border2;
 uniform vec3 border3;
 
+varying vec3 v_uvp;
 float roundCorners(vec2 p, vec2 b, float r){
     return length(max(abs(p)-b+r,0.0))-r;
 }
@@ -31,13 +31,13 @@ vec4 tv(vec3 color, vec2 pos){
     return vec4( mix(color, noise, noise_intensity), a);
 }
 
-
 vec3 htmtcolor(int html){
-    float rValue = float(html / 256 / 256);
-    float gValue = float(html / 256 - int(rValue * 256.0));
-    float bValue = float(html - int(rValue * 256.0 * 256.0) - int(gValue * 256.0));
-    return vec3(rValue / 255.0, gValue / 255.0, bValue / 255.0);
+    float rValue = float((html >> 16) & 0xFF) / 255.0;
+    float gValue = float((html >> 8) & 0xFF) / 255.0;
+    float bValue = float(html & 0xFF) / 255.0;
+    return vec3(rValue, gValue, bValue);
 }
+
 
 vec4 frame_border(vec2 uv){
     float bmax = ( max(max(border1[1]/2, border2[1]), border3[1] ) );
@@ -134,7 +134,7 @@ vec4 frame(vec2 uv){
         }else{
             color = mix(snap, frame, frame.a);
         }
-
+        
     }else{ // no frame overlay
         color = frame_border(uv);
     }
@@ -145,7 +145,8 @@ vec4 frame(vec2 uv){
 
 
 void main(){
-    vec2 uv = vec2(gl_TexCoord[0]);
+    //vec2 uv = vec2(gl_TexCoord[0]);
+    vec2 uv = v_uvp.xy / v_uvp.z;
     vec4 color = frame(uv);
     // must hide video if progress = 0 and no animation or an anmimatin delay is set (ex mame:buck rogers)
     gl_FragColor = color * alpha * sign(float(progress));
